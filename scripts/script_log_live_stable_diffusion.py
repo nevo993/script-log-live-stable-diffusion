@@ -4,12 +4,12 @@ import threading
 import time
 import io
 
-# Bufor logów
+# --- Log buffer ---
 _log_buffer = io.StringIO()
 _log_lock = threading.Lock()
-MAX_LOG_SIZE = 150000
+MAX_LOG_SIZE = 150000  # Max buffer size (set higher for larger log view)
 
-# --- Interceptor dla stdout/stderr ---
+# --- Interceptor for stdout/stderr ---
 class LogInterceptor:
     def __init__(self, stream):
         self.stream = stream
@@ -36,38 +36,39 @@ class LogInterceptor:
             pass
 
     def isatty(self):
-        # Umożliwia Uvicornowi i loggerom działać normalnie
+        # Allows Uvicorn and other loggers to function normally
         return hasattr(self.stream, "isatty") and self.stream.isatty()
 
-# Zamiana stdout/stderr tylko raz
+# Replace stdout/stderr once
 if not isinstance(sys.stdout, LogInterceptor):
     sys.stdout = LogInterceptor(sys.stdout)
 if not isinstance(sys.stderr, LogInterceptor):
     sys.stderr = LogInterceptor(sys.stderr)
 
 def read_live_log():
+    """Read the current contents of the log buffer."""
     with _log_lock:
         content = _log_buffer.getvalue()
-    return content or "(brak logów — uruchom generowanie lub działanie w konsoli)"
+    return content or "(no logs yet — try running generation or other console actions)"
 
 def on_ui_tabs():
-    """Tworzy zakładkę Live Logs"""
+    """Creates the Live Logs tab in the WebUI."""
     with gr.Blocks(analytics_enabled=False) as log_tab:
-        gr.Markdown("### 🧠 Live Logs — console WebUI")
+        gr.Markdown("### 🧠 Live Logs — WebUI Console Output")
         log_box = gr.Textbox(
             value=read_live_log(),
             label="Log output",
             lines=25,
             interactive=False
         )
-        refresh_btn = gr.Button("⟳ Refresh log")
+        refresh_btn = gr.Button("⟳ Refresh Logs")
 
         def manual_refresh():
             return read_live_log()
 
         refresh_btn.click(fn=manual_refresh, outputs=log_box)
 
-        # Auto-refresh co sekundę (kompatybilny z gradio 3.41)
+        # Auto-refresh every second (compatible with Gradio 3.41)
         def refresh_loop():
             while True:
                 time.sleep(1)
@@ -83,6 +84,6 @@ def on_ui_tabs():
 try:
     import modules.script_callbacks as script_callbacks
     script_callbacks.on_ui_tabs(on_ui_tabs)
-    print("[Live Logs] Extension aktywny — logi widoczne w zakładce Live Logs.")
+    print("[Live Logs] Extension active — console output available under 'Live Logs' tab.")
 except Exception as e:
-    print("[Live Logs] Błąd inicjalizacji:", e)
+    print("[Live Logs] Initialization error:", e)
