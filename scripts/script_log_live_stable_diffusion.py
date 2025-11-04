@@ -53,7 +53,7 @@ def read_live_log():
 def on_ui_tabs():
     """Tworzy zakładkę Live Logs"""
     with gr.Blocks(analytics_enabled=False) as log_tab:
-        gr.Markdown("### 🧠 Live Logs — podgląd konsoli WebUI")
+        gr.Markdown("### 🧠 Live Logs — console WebUI")
         log_box = gr.Textbox(
             value=read_live_log(),
             label="Log output",
