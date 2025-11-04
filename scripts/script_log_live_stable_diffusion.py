@@ -60,7 +60,7 @@ def on_ui_tabs():
             lines=25,
             interactive=False
         )
-        refresh_btn = gr.Button("⟳ Odśwież log")
+        refresh_btn = gr.Button("⟳ Refresh log")
 
         def manual_refresh():
             return read_live_log()
